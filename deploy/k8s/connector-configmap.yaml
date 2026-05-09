@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: connector-config
+  namespace: oauth-ms
+data:
+  config.yaml: |
+    server:
+      addr: ":8080"
+      base_url: "http://localhost:8080"
+      read_timeout: 10s
+      write_timeout: 15s
+      shutdown_timeout: 15s
+    cache:
+      driver: memory
+    auth:
+      state_ttl: 10m
+      session_ttl: 24h
+      cookie_secure: false
+      cookie_samesite: lax
+      post_login_path: "/"
+    internal:
+      base_url: "http://internal-service.oauth-ms.svc.cluster.local:8081"
+      http_timeout: 5s
+      cache_ttl: 60s
+    providers:
+      github:
+        scopes: ["read:user", "public_repo"]
+    logging:
+      level: info
+      format: json

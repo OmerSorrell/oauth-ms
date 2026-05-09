@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connector
+  namespace: oauth-ms
+  labels:
+    app: connector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: connector
+  template:
+    metadata:
+      labels:
+        app: connector
+    spec:
+      containers:
+        - name: connector
+          image: oauth-ms-connector:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - secretRef:
+                name: connector-secrets
+          volumeMounts:
+            - name: config
+              mountPath: /etc/oauth-ms
+              readOnly: true
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8080 }
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: config
+          configMap:
+            name: connector-config

@@ -1,0 +1,32 @@
+server:
+  addr: ":8080"
+  base_url: "http://localhost:8080"
+  read_timeout: 10s
+  write_timeout: 15s
+  shutdown_timeout: 15s
+
+cache:
+  driver: memory
+
+auth:
+  state_ttl: 10m
+  session_ttl: 24h
+  cookie_secure: false      # set true behind HTTPS
+  cookie_samesite: lax
+  cookie_domain: ""
+  post_login_path: "/"
+
+internal:
+  base_url: "http://internal-service:8081"
+  http_timeout: 5s
+  cache_ttl: 60s
+  # api_key: set via OAUTH_MS_INTERNAL_API_KEY
+
+providers:
+  github:
+    scopes: ["read:user", "public_repo"]
+    # client_id / client_secret: set via OAUTH_MS_PROVIDERS_GITHUB_CLIENT_ID / _SECRET
+
+logging:
+  level: info
+  format: json

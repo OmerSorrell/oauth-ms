@@ -1,0 +1,8 @@
+.git
+.gitignore
+.idea
+.vscode
+*.md
+deploy/
+docs/
+**/*_test.go

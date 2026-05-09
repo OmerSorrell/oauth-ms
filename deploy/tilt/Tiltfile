@@ -1,0 +1,56 @@
+# Tiltfile for the oauth-ms connector + mock internal service.
+#
+# Usage from repo root:
+#   tilt up
+#
+# Prereqs: a local k8s cluster (Docker Desktop, kind, k3d, etc.) and a 'connector-secret.yaml'
+# created from connector-secret.example.yaml in deploy/k8s/.
+
+load('ext://restart_process', 'docker_build_with_restart')
+
+# Make sure the namespace and secret exist before deploying workloads.
+k8s_yaml([
+    '../k8s/namespace.yaml',
+    '../k8s/connector-configmap.yaml',
+    '../k8s/connector-secret.yaml',
+])
+
+# Connector image — full repo as build context so go:embed (web/) and module files are in.
+docker_build(
+    'oauth-ms-connector:dev',
+    context='../..',
+    dockerfile='../../Dockerfile',
+    only=[
+        'go.mod', 'go.sum',
+        'cmd/', 'internal/', 'web/',
+    ],
+)
+
+k8s_yaml([
+    '../k8s/connector-deployment.yaml',
+    '../k8s/connector-service.yaml',
+])
+
+k8s_resource(
+    'connector',
+    port_forwards=['8080:8080'],
+    resource_deps=['internal-service'],
+)
+
+# Mock internal service.
+docker_build(
+    'oauth-ms-internal:dev',
+    context='../..',
+    dockerfile='../../mocks/internal-service/Dockerfile',
+    only=[
+        'go.mod', 'go.sum',
+        'mocks/internal-service/',
+    ],
+)
+
+k8s_yaml([
+    '../k8s/internal-deployment.yaml',
+    '../k8s/internal-service.yaml',
+])
+
+k8s_resource('internal-service', port_forwards=['8081:8081'])

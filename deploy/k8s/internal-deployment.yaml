@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: internal-service
+  namespace: oauth-ms
+  labels:
+    app: internal-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: internal-service
+  template:
+    metadata:
+      labels:
+        app: internal-service
+    spec:
+      containers:
+        - name: internal-service
+          image: oauth-ms-internal:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: http
+          env:
+            - name: ADDR
+              value: ":8081"
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: connector-secrets
+                  key: OAUTH_MS_INTERNAL_API_KEY
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8081 }
+            initialDelaySeconds: 1
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
