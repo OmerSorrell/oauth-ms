@@ -72,6 +72,14 @@ cp deploy/k8s/connector-secret.example.yaml deploy/k8s/connector-secret.yaml
 # Fill in OAUTH_MS_PROVIDERS_GITHUB_CLIENT_ID / _SECRET in that file.
 make tilt-up
 # Tilt port-forwards connector to :8080 and the mock service to :8081.
+
+# Once Tilt shows both resources green, kick off the GitHub auth flow:
+curl -i http://localhost:8080/auth/github
+# -> 302 Location: https://github.com/login/oauth/authorize?...  (open in a browser to complete)
+
+# After signing in via the browser, grab the session_id cookie from devtools and:
+curl -s --cookie "session_id=<paste>" http://localhost:8080/profile | jq .
+# -> { "user": {...}, "resources": [...] }
 ```
 
 ## Endpoints

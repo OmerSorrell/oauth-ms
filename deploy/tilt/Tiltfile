@@ -37,6 +37,17 @@ k8s_resource(
     resource_deps=['internal-service'],
 )
 
+# Secrets are injected as env vars, so the pod only reads them at start.
+# When connector-secret.yaml changes, Tilt re-applies the Secret automatically;
+# this resource then bounces the deployment so the new values take effect.
+local_resource(
+    'connector-secret-reload',
+    cmd='kubectl rollout restart -n oauth-ms deploy/connector',
+    deps=['../k8s/connector-secret.yaml'],
+    resource_deps=['connector'],
+    auto_init=False,
+)
+
 # Mock internal service.
 docker_build(
     'oauth-ms-internal:dev',
